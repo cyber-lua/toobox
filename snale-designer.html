@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <meta name="description" content="snale designer is a free, open-source graphic design tool.">
+    <meta name="author" content="xyzbeepo">
+    <title>Snale Designer</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            color: #2e5266;
+            background-color: #f5f5f5;
+        }
+        #sidebar {
+            width: 250px;
+            border-right: 1px solid #d3d0cb;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            resize: horizontal;
+            overflow: auto;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        #sidebar-resizer {
+            width: 10px;
+            height: 100%;
+            background-color: #9fb1bc;
+            cursor: ew-resize;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+        }
+        #tabs {
+            display: flex;
+            flex-direction: column;
+        }
+        .tab-button {
+            padding: 15px;
+            cursor: pointer;
+            border: none;
+            background: #6e8898;
+            color: #ffffff;
+            text-align: left;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+        .tab-button:hover {
+            background: #9fb1bc;
+        }
+        .tab-button.active {
+            background: #2e5266;
+        }
+        .tab-content {
+            display: none;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: #ffffff;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tool-options {
+            margin-top: 10px;
+        }
+        #canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        canvas {
+            border: 2px solid #2e5266;
+            border-radius: 8px;
+        }
+        #documentationContent {
+            white-space: pre-wrap;
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #9fb1bc;
+        }
+        .graph-input, .text-input {
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #6e8898;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        button, .file-input-label {
+            background-color: #2e5266;
+            color: #ffffff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: inline-block;
+        }
+        button:hover, .file-input-label:hover {
+            background-color: #6e8898;
+        }
+        h2 {
+            color: #2e5266;
+        }
+        h3 {
+            color: #6e8898;
+        }
+        label {
+            color: #2e5266;
+            font-weight: bold;
+        }
+        .hidden-file-input {
+            display: none;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="sidebar">
+        <div id="sidebar-resizer"></div>
+        <div id="tabs">
+            <button class="tab-button active" onclick="openTab('toolsTab')">Tools</button>
+            <button class="tab-button" onclick="openTab('colorsTab')">Colors</button>
+            <button class="tab-button" onclick="openTab('shapesTab')">Shapes</button>
+            <button class="tab-button" onclick="openTab('imagesTab')">Images</button>
+            <button class="tab-button" onclick="openTab('downloadTab')">Download</button>
+            <button class="tab-button" onclick="openTab('documentationTab')">Documentation</button>
+        </div>
+        <div id="toolsTab" class="tab-content active">
+            <button onclick="selectTool('line')">Line</button>
+            <button onclick="selectTool('pen')">Pen</button>
+            <button onclick="selectTool('eraser')">Eraser</button>
+            <div class="tool-options">
+                <label for="toolSize">Size:</label>
+                <input type="range" id="toolSize" min="1" max="50" value="2" onchange="changeToolSize(this.value)">
+            </div>
+        </div>
+        <div id="colorsTab" class="tab-content">
+            <input type="color" id="colorPicker" value="#000000" onchange="changeColor(this.value)">
+        </div>
+        <div id="shapesTab" class="tab-content">
+            <button onclick="selectTool('rectangle')">Rectangle</button>
+            <button onclick="selectTool('circle')">Circle</button>
+            <div class="tool-options">
+                <label for="shapeSize">Size:</label>
+                <input type="range" id="shapeSize" min="1" max="50" value="2" onchange="changeToolSize(this.value)">
+            </div>
+        </div>
+        <div id="imagesTab" class="tab-content">
+            <input type="file" id="imageUploader" accept="image/*" class="hidden-file-input">
+            <label for="imageUploader" class="file-input-label">Upload Image</label>
+            <div id="imageResults"></div>
+        </div>
+        <div id="textTab" class="tab-content">
+            <div>
+                <label for="textInput">Enter Text:</label>
+                <input type="text" id="textInput" class="text-input">
+            </div>
+            <button onclick="createText()">Add Text</button>
+            <div id="textResults"></div>
+        </div>
+        <div id="graphTab" class="tab-content">
+            <div>
+                <label for="graphTitle">Graph Title:</label>
+                <input type="text" id="graphTitle" class="graph-input">
+            </div>
+            <div>
+                <label for="xAxisLabel">X-Axis Label:</label>
+                <input type="text" id="xAxisLabel" class="graph-input">
+            </div>
+            <div>
+                <label for="yAxisLabel">Y-Axis Label:</label>
+                <input type="text" id="yAxisLabel" class="graph-input">
+            </div>
+            <div>
+                <label for="dataPoints">Data Points (comma-separated):</label>
+                <input type="text" id="dataPoints" class="graph-input">
+            </div>
+            <button onclick="createGraph()">Create Graph</button>
+            <div id="graphResults"></div>
+        </div>
+        <div id="downloadTab" class="tab-content">
+            <button onclick="downloadImage('png')">Download as PNG</button>
+            <button onclick="downloadImage('jpg')">Download as JPG</button>
+            <button onclick="downloadImage('svg')">Download as SVG</button>
+        </div>
+        <div id="documentationTab" class="tab-content">
+            <div id="documentationContent">
+                <h2>Documentation</h2>
+                <p>Welcome to the Snale Designer documentation. Here you will find instructions on how to use the various tools and features of the app.</p>
+                <h3>Tools</h3>
+                <ul>
+                    <li><b>Line:</b> Click and drag to draw a straight line.</li>
+                    <li><b>Pen:</b> Click and drag to draw freeform lines.</li>
+                    <li><b>Eraser:</b> Click and drag to erase elements.</li>
+                </ul>
+                <h3>Colors</h3>
+                <p>Use the color picker to select the color for your lines and shapes.</p>
+                <h3>Shapes</h3>
+                <ul>
+                    <li><b>Rectangle:</b> Click and drag to draw a rectangle.</li>
+                    <li><b>Circle:</b> Click and drag to draw a circle.</li>
+                </ul>
+                <h3>Images</h3>
+                <p>Upload images using the Images tab, then drag and drop them onto the canvas. Use the mouse wheel to scale the images.</p>
+                <h3>Text</h3>
+                <p>Enter text in the Text tab, then drag and drop it onto the canvas.</p>
+                <h3>Graph</h3>
+                <p>Create a graph using the Graph tab, then drag and drop it onto the canvas.</p>
+                <h3>Download</h3>
+                <p>Use the download tab to save your canvas as PNG, JPG, or SVG files.</p>
+            </div>
+        </div>
+    </div>
+    <div id="canvas-container">
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let tool = 'pen';
+        let drawing = false;
+        let startX, startY;
+        let elements = [];
+        let currentPath = [];
+        let draggedImage = null;
+        let dragging = false;
+        let scaleFactor = 1;
+        let color = '#000000';
+        let toolSize = 2;
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            if (tool === 'eraser') {
+                erase(x, y);
+                drawing = true;
+            } else if (draggedImage) {
+                const img = new Image();
+                img.src = draggedImage.src;
+                img.onload = () => {
+                    elements.push({ type: 'image', img: img, startX: x, startY: y, width: img.width * scaleFactor, height: img.height * scaleFactor });
+                    drawElements();
+                };
+                draggedImage = null;
+                dragging = false;
+                scaleFactor = 1;
+            } else {
+                startX = x;
+                startY = y;
+                if (tool === 'pen') {
+                    currentPath = [{ x, y }];
+                }
+                drawing = true;
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (drawing) {
+                if (tool === 'pen') {
+                    elements.push({ type: 'pen', path: currentPath, color, size: toolSize });
+                } else {
+                    const rect = canvas.getBoundingClientRect();
+                    const currentX = e.clientX - rect.left;
+                    const currentY = e.clientY - rect.top;
+                    if (tool === 'line') {
+                        elements.push({ type: 'line', startX, startY, endX: currentX, endY: currentY, color, size: toolSize });
+                    } else if (tool === 'rectangle') {
+                        elements.push({ type: 'rectangle', startX, startY, endX: currentX, endY: currentY, color, size: toolSize });
+                    } else if (tool === 'circle') {
+                        const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+                        elements.push({ type: 'circle', startX, startY, radius, color, size: toolSize });
+                    }
+                }
+                drawing = false;
+                drawElements();
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (drawing && tool === 'eraser') {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                erase(x, y);
+            } else if (drawing) {
+                const rect = canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                if (tool === 'pen') {
+                    currentPath.push({ x: currentX, y: currentY });
+                    drawElements();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = toolSize;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    for (const point of currentPath) {
+                        ctx.lineTo(point.x, point.y);
+                    }
+                    ctx.stroke();
+                }
+            }
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            if (draggedImage) {
+                e.preventDefault();
+                scaleFactor += e.deltaY * -0.01;
+                scaleFactor = Math.min(Math.max(.125, scaleFactor), 4);
+            }
+        });
+
+        function selectTool(selectedTool) {
+            tool = selectedTool;
+        }
+
+        function changeColor(selectedColor) {
+            color = selectedColor;
+        }
+
+        function changeToolSize(size) {
+            toolSize = size;
+        }
+
+        function drawElements() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const element of elements) {
+                ctx.strokeStyle = element.color;
+                ctx.lineWidth = element.size || 2;
+                if (element.type === 'pen') {
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(element.path[0].x, element.path[0].y);
+                    for (const point of element.path) {
+                        ctx.lineTo(point.x, point.y);
+                    }
+                    ctx.stroke();
+                } else if (element.type === 'line') {
+                    ctx.beginPath();
+                    ctx.moveTo(element.startX, element.startY);
+                    ctx.lineTo(element.endX, element.endY);
+                    ctx.stroke();
+                } else if (element.type === 'rectangle') {
+                    ctx.beginPath();
+                    ctx.rect(element.startX, element.startY, element.endX - element.startX, element.endY - element.startY);
+                    ctx.stroke();
+                } else if (element.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(element.startX, element.startY, element.radius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                } else if (element.type === 'image') {
+                    ctx.drawImage(element.img, element.startX, element.startY, element.width, element.height);
+                } else if (element.type === 'graph') {
+                    const img = new Image();
+                    img.src = element.src;
+                    img.onload = () => {
+                        ctx.drawImage(img, element.startX, element.startY, element.width, element.height);
+                    };
+                } else if (element.type === 'text') {
+                    ctx.font = '20px Roboto';
+                    ctx.fillStyle = element.color;
+                    ctx.fillText(element.text, element.startX, element.startY);
+                }
+            }
+        }
+
+        function erase(x, y) {
+            elements = elements.filter(element => !isPointInElement(x, y, element));
+            drawElements();
+        }
+
+        function isPointInElement(x, y, element) {
+            if (element.type === 'pen') {
+                return element.path.some(point => {
+                    const dx = x - point.x;
+                    const dy = y - point.y;
+                    return Math.sqrt(dx * dx + dy * dy) < toolSize;
+                });
+            } else if (element.type === 'line') {
+                const distToStart = Math.sqrt((x - element.startX) ** 2 + (y - element.startY) ** 2);
+                const distToEnd = Math.sqrt((x - element.endX) ** 2 + (y - element.endY) ** 2);
+                const lineLength = Math.sqrt((element.endX - element.startX) ** 2 + (element.endY - element.startY) ** 2);
+                return distToStart + distToEnd >= lineLength - 1 && distToStart + distToEnd <= lineLength + 1;
+            } else if (element.type === 'rectangle') {
+                return x >= element.startX && x <= element.endX && y >= element.startY && y <= element.endY;
+            } else if (element.type === 'circle') {
+                const dist = Math.sqrt((x - element.startX) ** 2 + (y - element.startY) ** 2);
+                return dist <= element.radius;
+            } else if (element.type === 'image') {
+                return x >= element.startX && x <= element.startX + element.width && y >= element.startY && y <= element.startY + element.height;
+            } else if (element.type === 'graph') {
+                return x >= element.startX && x <= element.startX + element.width && y >= element.startY && y <= element.startY + element.height;
+            } else if (element.type === 'text') {
+                ctx.font = '20px Roboto';
+                const textWidth = ctx.measureText(element.text).width;
+                const textHeight = 20; // Approximate height
+                return x >= element.startX && x <= element.startX + textWidth && y >= element.startY - textHeight && y <= element.startY;
+            }
+            return false;
+        }
+
+        function openTab(tabId) {
+            const tabs = document.querySelectorAll('.tab-button');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`.tab-button[onclick="openTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function createGraph() {
+            const title = document.getElementById('graphTitle').value;
+            const xAxis = document.getElementById('xAxisLabel').value;
+            const yAxis = document.getElementById('yAxisLabel').value;
+            const data = document.getElementById('dataPoints').value.split(',').map(Number);
+
+            const graphCanvas = document.createElement('canvas');
+            graphCanvas.width = 200;
+            graphCanvas.height = 200;
+            const graphCtx = graphCanvas.getContext('2d');
+
+            graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+            graphCtx.fillText(title, graphCanvas.width / 2, 20);
+            graphCtx.fillText(xAxis, graphCanvas.width / 2, graphCanvas.height - 10);
+            graphCtx.save();
+            graphCtx.translate(10, graphCanvas.height / 2);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText(yAxis, 0, 0);
+            graphCtx.restore();
+
+            const maxData = Math.max(...data);
+            const barWidth = (graphCanvas.width - 40) / data.length;
+            data.forEach((value, index) => {
+                const barHeight = (value / maxData) * (graphCanvas.height - 40);
+                graphCtx.fillRect(30 + index * barWidth, graphCanvas.height - 30 - barHeight, barWidth - 5, barHeight);
+            });
+
+            const graphResults = document.getElementById('graphResults');
+            graphResults.innerHTML = '';
+            graphCanvas.draggable = true;
+            graphCanvas.ondragstart = (event) => {
+                draggedImage = event.target;
+                dragging = true;
+            };
+            graphResults.appendChild(graphCanvas);
+        }
+
+        function createText() {
+            const text = document.getElementById('textInput').value;
+            const textCanvas = document.createElement('canvas');
+            const textCtx = textCanvas.getContext('2d');
+            textCtx.font = '20px Roboto';
+            const textWidth = textCtx.measureText(text).width;
+            const textHeight = 24; // Approximate height
+            textCanvas.width = textWidth;
+            textCanvas.height = textHeight;
+            textCtx.font = '20px Roboto';
+            textCtx.fillStyle = color;
+            textCtx.fillText(text, 0, textHeight / 1.2);
+
+            const textResults = document.getElementById('textResults');
+            textResults.innerHTML = '';
+            textCanvas.draggable = true;
+            textCanvas.ondragstart = (event) => {
+                draggedImage = event.target;
+                dragging = true;
+            };
+            textResults.appendChild(textCanvas);
+        }
+
+        function downloadImage(format) {
+            let link = document.createElement('a');
+            let exportCanvas = document.createElement('canvas');
+            let exportCtx = exportCanvas.getContext('2d');
+
+            exportCanvas.width = canvas.width;
+            exportCanvas.height = canvas.height;
+
+            // Draw all elements except external images
+            elements.forEach(element => {
+                exportCtx.strokeStyle = element.color;
+                exportCtx.lineWidth = element.size || 2;
+                if (element.type === 'pen') {
+                    exportCtx.lineCap = 'round';
+                    exportCtx.beginPath();
+                    exportCtx.moveTo(element.path[0].x, element.path[0].y);
+                    for (const point of element.path) {
+                        exportCtx.lineTo(point.x, point.y);
+                    }
+                    exportCtx.stroke();
+                } else if (element.type === 'line') {
+                    exportCtx.beginPath();
+                    exportCtx.moveTo(element.startX, element.startY);
+                    exportCtx.lineTo(element.endX, element.endY);
+                    exportCtx.stroke();
+                } else if (element.type === 'rectangle') {
+                    exportCtx.beginPath();
+                    exportCtx.rect(element.startX, element.startY, element.endX - element.startX, element.endY - element.startY);
+                    exportCtx.stroke();
+                } else if (element.type === 'circle') {
+                    exportCtx.beginPath();
+                    exportCtx.arc(element.startX, element.startY, element.radius, 0, 2 * Math.PI);
+                    exportCtx.stroke();
+                } else if (element.type === 'text') {
+                    exportCtx.font = '20px Roboto';
+                    exportCtx.fillStyle = element.color;
+                    exportCtx.fillText(element.text, element.startX, element.startY);
+                } else if (element.type === 'image') {
+                    exportCtx.drawImage(element.img, element.startX, element.startY, element.width, element.height);
+                }
+            });
+
+            if (format === 'png' || format === 'jpg') {
+                link.download = `canvas.${format}`;
+                link.href = exportCanvas.toDataURL(`image/${format}`);
+            } else if (format === 'svg') {
+                let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">`;
+                svg += `<foreignObject width="100%" height="100%">`;
+                svg += `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${canvas.width}px;height:${canvas.height}px;">`;
+                svg += `<img src="${exportCanvas.toDataURL()}" style="width:100%;height:100%;"/>`;
+                svg += `</div>`;
+                svg += `</foreignObject>`;
+                svg += `</svg>`;
+                let svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+                link.download = 'canvas.svg';
+                link.href = URL.createObjectURL(svgBlob);
+            }
+            link.click();
+        }
+
+        canvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (dragging) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                if (draggedImage.tagName === 'IMG') {
+                    const img = new Image();
+                    img.src = draggedImage.src;
+                    img.onload = () => {
+                        elements.push({ type: 'image', img: img, startX: x, startY: y, width: img.width * scaleFactor, height: img.height * scaleFactor });
+                        drawElements();
+                    };
+                } else if (draggedImage.tagName === 'CANVAS') {
+                    elements.push({ type: 'graph', src: draggedImage.toDataURL(), startX: x, startY: y, width: draggedImage.width, height: draggedImage.height });
+                } else if (draggedImage.tagName === 'DIV') {
+                    elements.push({ type: 'text', text: draggedImage.innerText, startX: x, startY: y, color });
+                }
+                draggedImage = null;
+                dragging = false;
+                scaleFactor = 1;
+            }
+        });
+
+        document.getElementById('imageUploader').addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.draggable = true;
+                    img.ondragstart = (event) => {
+                        draggedImage = event.target;
+                        dragging = true;
+                    };
+                    document.getElementById('imageResults').appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Resizable Sidebar
+        const sidebar = document.getElementById('sidebar');
+        const resizer = document.getElementById('sidebar-resizer');
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const newWidth = e.clientX - sidebar.getBoundingClientRect().left;
+            sidebar.style.width = `${newWidth}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isResizing = false;
+        });
+    </script>
+</body>
+</html>

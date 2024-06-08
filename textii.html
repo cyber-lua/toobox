@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <meta name="description" content="Textii is a free online media-to-text converter. if you want to share something but the file is too big. Textii will help you. no size cap, just may take a while to load. Have fun :)">
+    <meta name="author" content="xyzbeepo">
+    <title>Textii</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .notification {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #28a745;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            z-index: 9999;
+            display: none;
+        }
+        .container {
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            margin: auto;
+            overflow: hidden;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        textarea {
+            width: 90%;
+            height: 190px;
+            margin-top: 10px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+            font-size: 14px;
+            color: #333;
+            margin: auto;
+        }
+        #link {
+            color: #28a745;
+        }
+        select {
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 16px;
+    border-radius: 5px;
+    border: 1px solid #28a745;
+    background-color: #28a745;
+    font-size: 16px;
+    color: white;
+    vertical-align: middle; /* Align text vertically */
+    text-align: center; /* Align text horizontally */
+}
+
+        #progress {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #progressBar {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #progressBar > div {
+            height: 20px;
+            background-color: #007bff;
+            width: 0;
+        }
+        #progressText {
+            font-size: 14px;
+            color: #007bff;
+        }
+        .media-preview {
+            margin-top: 20px;
+        }
+        .media-preview img,
+        .media-preview video,
+        .media-preview audio {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+    <div class="container">
+        <h1>Textii</h1>
+        <a id="link" href="https://github.com/xyzbeepo/Textii">By xyzbeepo on github</a>
+        <input type="file" id="fileInput" multiple>
+        <div id="container">
+            <label for="fileInput">Choose Files</label>
+            <button id="convertButton">Convert to Text</button>
+            <button onclick="processPastedText()">Process Pasted Text</button>
+        </div>
+        <div id="progress" style="display: none;">
+            <div id="progressBar"><div></div></div>
+            <div id="progressText">0%</div>
+        </div>
+        <textarea id="textOutput" readonly></textarea>
+        <select id="mediaType">
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+            <option value="audio">Audio</option>
+            <option value="zip">Zip</option>
+            <option value="exe">Executable (EXE)</option>
+            <option value="dmg">Disk Image (DMG)</option>
+            <option value="mov">MOV</option>
+            <option value="mp3">MP3</option>
+            <option value="wav">WAV</option>
+            <option value="m4a">M4A</option>
+            <option value="apk">APK</option>
+        </select>
+        <textarea id="textInput" placeholder="Paste text here"></textarea>
+        <div class="media-preview" id="mediaPreview"></div>
+        <p id="link">Files may be incorrect, instable or crash your browser when importing/exporting. Use at you own risk.</p>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let progressInterval;
+
+        document.getElementById('fileInput').addEventListener('change', event => {
+            selectedFiles = Array.from(event.target.files);
+            showMessage('File uploaded');
+        });
+
+        document.getElementById('convertButton').addEventListener('click', convertFilesToText);
+
+        async function convertFilesToText() {
+            if (selectedFiles.length === 0) {
+                alert("Please select files first.");
+                return;
+            }
+
+            const output = document.getElementById('textOutput');
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progressBar').firstElementChild;
+            const progressText = document.getElementById('progressText');
+            output.value = '';
+            progress.style.display = 'flex';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+
+            let totalSize = 0;
+            for (const file of selectedFiles) {
+                totalSize += file.size;
+            }
+
+            const estimatedTime = totalSize / (1024 * 1024 * 2); // Assuming 2MB/s processing speed
+            if (estimatedTime > 5) {
+                alert(`Processing might take a while. Estimated time: ${Math.ceil(estimatedTime)} seconds`);
+            }
+
+            let processedSize = 0;
+            let startTime = Date.now();
+
+            // Update progress bar periodically
+            progressInterval = setInterval(() => {
+                const elapsedTime = Date.now() - startTime;
+                const percentage = Math.min((processedSize / totalSize) * 100, 100);
+                progressBar.style.width = `${percentage}%`;
+                progressText.textContent = `${Math.round(percentage)}%`;
+
+                if (processedSize >= totalSize) {
+                    clearInterval(progressInterval);
+                }
+            }, 1000); // Update every second
+
+            for (const file of selectedFiles) {
+                const fileContent = await readFileAsBase64(file);
+                output.value += `${fileContent}\n\n`;
+
+                processedSize += file.size;
+                await new Promise(resolve => setTimeout(resolve, 100)); // Simulate processing time
+            }
+
+            progress.style.display = 'none';
+            showMessage('File converted');
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function processPastedText() {
+            const inputText = document.getElementById('textInput').value.trim();
+            const mediaType = document.getElementById('mediaType').value;
+            const mediaPreview = document.getElementById('mediaPreview');
+            mediaPreview.innerHTML = ''; // Clear previous previews
+
+            if (inputText) {
+                const fileContents = inputText.split('\n\n').filter(content => content.trim() !== '');
+                fileContents.forEach(content => {
+                    const mediaElement = createMediaElement(mediaType, content);
+                    if (mediaElement) {
+                        mediaPreview.appendChild(mediaElement);
+                    }
+                });
+            }
+
+            showMessage('Text imported');
+        }
+
+        function showMessage(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000); // Hide notification after 3 seconds
+        }
+
+        function createMediaElement(type, base64) {
+    let element;
+    if (type === 'image') {
+        element = document.createElement('img');
+        element.src = base64;
+    } else if (type === 'video') {
+        element = document.createElement('video');
+        element.controls = true;
+        element.src = base64;
+    } else if (type === 'audio') {
+        element = document.createElement('audio');
+        element.controls = true;
+        element.src = base64;
+    } else if (type === 'zip' || type === 'exe' || type === 'dmg' || type === 'mov' || type === 'mp3' || type === 'wav' || type === 'm4a' || type === 'apk') {
+        // Create a Blob from base64 content
+        const byteCharacters = atob(base64.split(',')[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: `application/${type}` });
+
+        // Create a Blob URL and use it as href
+        const blobUrl = URL.createObjectURL(blob);
+
+        element = document.createElement('a');
+        element.href = blobUrl;
+        element.download = `file.${type}`;
+        element.textContent = `Download ${type.toUpperCase()} file`;
+    }
+    return element;
+}
+
+    </script>
+</body>
+</html>

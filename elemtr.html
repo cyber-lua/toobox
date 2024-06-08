@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>elemtr</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            margin: 20px auto;
+            width: 90%;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 50px);
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .element {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s, color 0.2s;
+            font-weight: bold;
+            color: #fff;
+            border-radius: 4px;
+        }
+
+        .element:hover {
+            transform: scale(1.2);
+        }
+
+        .element:nth-child(odd) {
+            background-color: #deacff;
+        }
+
+        .element:nth-child(even) {
+            background-color: #bc57ff;
+        }
+
+        .element:nth-child(1),
+        .element:nth-child(18) {
+            grid-column: 1 / span 1;
+        }
+
+        .element:nth-child(2),
+        .element:nth-child(10),
+        .element:nth-child(18) {
+            grid-column: 18 / span 1;
+        }
+
+        /* Adjustments for specific groups and periods can be made here */
+        .element:nth-child(n + 3):nth-child(-n + 10) {
+            grid-column: auto / span 1;
+        }
+
+        .element:nth-child(n + 11):nth-child(-n + 18) {
+            grid-column: auto / span 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            text-align: left;
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>elemtr</h1>
+        <div class="periodic-table" id="periodicTable"></div>
+    </div>
+
+    <div id="elementModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="elementName"></h2>
+            <p id="elementDetails"></p>
+        </div>
+    </div>
+
+    <script>
+        const elements = {
+            'H': { name: 'Hydrogen', details: 'Atomic Number: 1\nSymbol: H\nAtomic Weight: 1.008\nGroup: 1\nPeriod: 1' },
+            'He': { name: 'Helium', details: 'Atomic Number: 2\nSymbol: He\nAtomic Weight: 4.0026\nGroup: 18\nPeriod: 1' },
+            'Li': { name: 'Lithium', details: 'Atomic Number: 3\nSymbol: Li\nAtomic Weight: 6.94\nGroup: 1\nPeriod: 2' },
+            'Be': { name: 'Beryllium', details: 'Atomic Number: 4\nSymbol: Be\nAtomic Weight: 9.0122\nGroup: 2\nPeriod: 2' },
+            'B': { name: 'Boron', details: 'Atomic Number: 5\nSymbol: B\nAtomic Weight: 10.81\nGroup: 13\nPeriod: 2' },
+            'C': { name: 'Carbon', details: 'Atomic Number: 6\nSymbol: C\nAtomic Weight: 12.011\nGroup: 14\nPeriod: 2' },
+            'N': { name: 'Nitrogen', details: 'Atomic Number: 7\nSymbol: N\nAtomic Weight: 14.007\nGroup: 15\nPeriod: 2' },
+            'O': { name: 'Oxygen', details: 'Atomic Number: 8\nSymbol: O\nAtomic Weight: 15.999\nGroup: 16\nPeriod: 2' },
+            'F': { name: 'Fluorine', details: 'Atomic Number: 9\nSymbol: F\nAtomic Weight: 18.998\nGroup: 17\nPeriod: 2' },
+            'Ne': { name: 'Neon', details: 'Atomic Number: 10\nSymbol: Ne\nAtomic Weight: 20.180\nGroup: 18\nPeriod: 2' },
+            'Na': { name: 'Sodium', details: 'Atomic Number: 11\nSymbol: Na\nAtomic Weight: 22.990\nGroup: 1\nPeriod: 3' },
+            'Mg': { name: 'Magnesium', details: 'Atomic Number: 12\nSymbol: Mg\nAtomic Weight: 24.305\nGroup: 2\nPeriod: 3' },
+            'Al': { name: 'Aluminium', details: 'Atomic Number: 13\nSymbol: Al\nAtomic Weight: 26.982\nGroup: 13\nPeriod: 3' },
+            'Si': { name: 'Silicon', details: 'Atomic Number: 14\nSymbol: Si\nAtomic Weight: 28.085\nGroup: 14\nPeriod: 3' },
+            'P': { name: 'Phosphorus', details: 'Atomic Number: 15\nSymbol: P\nAtomic Weight: 30.974\nGroup: 15\nPeriod: 3' },
+            'S': { name: 'Sulfur', details: 'Atomic Number: 16\nSymbol: S\nAtomic Weight: 32.06\nGroup: 16\nPeriod: 3' },
+            'Cl': { name: 'Chlorine', details: 'Atomic Number: 17\nSymbol: Cl\nAtomic Weight: 35.45\nGroup: 17\nPeriod: 3' },
+            'Ar': { name: 'Argon', details: 'Atomic Number: 18\nSymbol: Ar\nAtomic Weight: 39.95\nGroup: 18\nPeriod: 3' },
+            'K': { name: 'Potassium', details: 'Atomic Number: 19\nSymbol: K\nAtomic Weight: 39.10\nGroup: 1\nPeriod: 4' },
+            'Ca': { name: 'Calcium', details: 'Atomic Number: 20\nSymbol: Ca\nAtomic Weight: 40.08\nGroup: 2\nPeriod: 4' },
+            'Sc': { name: 'Scandium', details: 'Atomic Number: 21\nSymbol: Sc\nAtomic Weight: 44.96\nGroup: 3\nPeriod: 4' },
+            'Ti': { name: 'Titanium', details: 'Atomic Number: 22\nSymbol: Ti\nAtomic Weight: 47.87\nGroup: 4\nPeriod: 4' },
+            'V': { name: 'Vanadium', details: 'Atomic Number: 23\nSymbol: V\nAtomic Weight: 50.94\nGroup: 5\nPeriod: 4' },
+            'Cr': { name: 'Chromium', details: 'Atomic Number: 24\nSymbol: Cr\nAtomic Weight: 51.996\nGroup: 6\nPeriod: 4' },
+            'Mn': { name: 'Manganese', details: 'Atomic Number: 25\nSymbol: Mn\nAtomic Weight: 54.94\nGroup: 7\nPeriod: 4' },
+            'Fe': { name: 'Iron', details: 'Atomic Number: 26\nSymbol: Fe\nAtomic Weight: 55.85\nGroup: 8\nPeriod: 4' },
+            'Co': { name: 'Cobalt', details: 'Atomic Number: 27\nSymbol: Co\nAtomic Weight: 58.93\nGroup: 9\nPeriod: 4' },
+            'Ni': { name: 'Nickel', details: 'Atomic Number: 28\nSymbol: Ni\nAtomic Weight: 58.69\nGroup: 10\nPeriod: 4' },
+            'Cu': { name: 'Copper', details: 'Atomic Number: 29\nSymbol: Cu\nAtomic Weight: 63.55\nGroup: 11\nPeriod: 4' },
+            'Zn': { name: 'Zinc', details: 'Atomic Number: 30\nSymbol: Zn\nAtomic Weight: 65.38\nGroup: 12\nPeriod: 4' },
+            'Ga': { name: 'Gallium', details: 'Atomic Number: 31\nSymbol: Ga\nAtomic Weight: 69.72\nGroup: 13\nPeriod: 4' },
+            'Ge': { name: 'Germanium', details: 'Atomic Number: 32\nSymbol: Ge\nAtomic Weight: 72.63\nGroup: 14\nPeriod: 4' },
+            'As': { name: 'Arsenic', details: 'Atomic Number: 33\nSymbol: As\nAtomic Weight: 74.92\nGroup: 15\nPeriod: 4' },
+            'Se': { name: 'Selenium', details: 'Atomic Number: 34\nSymbol: Se\nAtomic Weight: 78.96\nGroup: 16\nPeriod: 4' },
+            'Br': { name: 'Bromine', details: 'Atomic Number: 35\nSymbol: Br\nAtomic Weight: 79.90\nGroup: 17\nPeriod: 4' },
+            'Kr': { name: 'Krypton', details: 'Atomic Number: 36\nSymbol: Kr\nAtomic Weight: 83.80\nGroup: 18\nPeriod: 4' },
+            'Rb': { name: 'Rubidium', details: 'Atomic Number: 37\nSymbol: Rb\nAtomic Weight: 85.47\nGroup: 1\nPeriod: 5' },
+            'Sr': { name: 'Strontium', details: 'Atomic Number: 38\nSymbol: Sr\nAtomic Weight: 87.62\nGroup: 2\nPeriod: 5' },
+            'Y': { name: 'Yttrium', details: 'Atomic Number: 39\nSymbol: Y\nAtomic Weight: 88.91\nGroup: 3\nPeriod: 5' },
+            'Zr': { name: 'Zirconium', details: 'Atomic Number: 40\nSymbol: Zr\nAtomic Weight: 91.22\nGroup: 4\nPeriod: 5' },
+            'Nb': { name: 'Niobium', details: 'Atomic Number: 41\nSymbol: Nb\nAtomic Weight: 92.91\nGroup: 5\nPeriod: 5' },
+            'Mo': { name: 'Molybdenum', details: 'Atomic Number: 42\nSymbol: Mo\nAtomic Weight: 95.95\nGroup: 6\nPeriod: 5' },
+            'Tc': { name: 'Technetium', details: 'Atomic Number: 43\nSymbol: Tc\nAtomic Weight: [98]\nGroup: 7\nPeriod: 5' },
+            'Ru': { name: 'Ruthenium', details: 'Atomic Number: 44\nSymbol: Ru\nAtomic Weight: 101.07\nGroup: 8\nPeriod: 5' },
+            'Rh': { name: 'Rhodium', details: 'Atomic Number: 45\nSymbol: Rh\nAtomic Weight: 102.91\nGroup: 9\nPeriod: 5' },
+            'Pd': { name: 'Palladium', details: 'Atomic Number: 46\nSymbol: Pd\nAtomic Weight: 106.42\nGroup: 10\nPeriod: 5' },
+            'Ag': { name: 'Silver', details: 'Atomic Number: 47\nSymbol: Ag\nAtomic Weight: 107.87\nGroup: 11\nPeriod: 5' },
+            'Cd': { name: 'Cadmium', details: 'Atomic Number: 48\nSymbol: Cd\nAtomic Weight: 112.41\nGroup: 12\nPeriod: 5' },
+            'In': { name: 'Indium', details: 'Atomic Number: 49\nSymbol: In\nAtomic Weight: 114.82\nGroup: 13\nPeriod: 5' },
+            'Sn': { name: 'Tin', details: 'Atomic Number: 50\nSymbol: Sn\nAtomic Weight: 118.71\nGroup: 14\nPeriod: 5' },
+            'Sb': { name: 'Antimony', details: 'Atomic Number: 51\nSymbol: Sb\nAtomic Weight: 121.76\nGroup: 15\nPeriod: 5' },
+            'Te': { name: 'Tellurium', details: 'Atomic Number: 52\nSymbol: Te\nAtomic Weight: 127.60\nGroup: 16\nPeriod: 5' },
+            'I': { name: 'Iodine', details: 'Atomic Number: 53\nSymbol: I\nAtomic Weight: 126.90\nGroup: 17\nPeriod: 5' },
+            'Xe': { name: 'Xenon', details: 'Atomic Number: 54\nSymbol: Xe\nAtomic Weight: 131.29\nGroup: 18\nPeriod: 5' },
+            'Cs': { name: 'Caesium', details: 'Atomic Number: 55\nSymbol: Cs\nAtomic Weight: 132.91\nGroup: 1\nPeriod: 6' },
+            'Ba': { name: 'Barium', details: 'Atomic Number: 56\nSymbol: Ba\nAtomic Weight: 137.33\nGroup: 2\nPeriod: 6' },
+            'La': { name: 'Lanthanum', details: 'Atomic Number: 57\nSymbol: La\nAtomic Weight: 138.91\nGroup: 3\nPeriod: 6' },
+            'Ce': { name: 'Cerium', details: 'Atomic Number: 58\nSymbol: Ce\nAtomic Weight: 140.12\nGroup: N/A\nPeriod: 6' },
+            'Pr': { name: 'Praseodymium', details: 'Atomic Number: 59\nSymbol: Pr\nAtomic Weight: 140.91\nGroup: N/A\nPeriod: 6' },
+            'Nd': { name: 'Neodymium', details: 'Atomic Number: 60\nSymbol: Nd\nAtomic Weight: 144.24\nGroup: N/A\nPeriod: 6' },
+            'Pm': { name: 'Promethium', details: 'Atomic Number: 61\nSymbol: Pm\nAtomic Weight: [145]\nGroup: N/A\nPeriod: 6' },
+            'Sm': { name: 'Samarium', details: 'Atomic Number: 62\nSymbol: Sm\nAtomic Weight: 150.36\nGroup: N/A\nPeriod: 6' },
+            'Eu': { name: 'Europium', details: 'Atomic Number: 63\nSymbol: Eu\nAtomic Weight: 151.96\nGroup: N/A\nPeriod: 6' },
+            'Gd': { name: 'Gadolinium', details: 'Atomic Number: 64\nSymbol: Gd\nAtomic Weight: 157.25\nGroup: N/A\nPeriod: 6' },
+            'Tb': { name: 'Terbium', details: 'Atomic Number: 65\nSymbol: Tb\nAtomic Weight: 158.93\nGroup: N/A\nPeriod: 6' },
+            'Dy': { name: 'Dysprosium', details: 'Atomic Number: 66\nSymbol: Dy\nAtomic Weight: 162.50\nGroup: N/A\nPeriod: 6' },
+            'Ho': { name: 'Holmium', details: 'Atomic Number: 67\nSymbol: Ho\nAtomic Weight: 164.93\nGroup: N/A\nPeriod: 6' },
+            'Er': { name: 'Erbium', details: 'Atomic Number: 68\nSymbol: Er\nAtomic Weight: 167.26\nGroup: N/A\nPeriod: 6' },
+            'Tm': { name: 'Thulium', details: 'Atomic Number: 69\nSymbol: Tm\nAtomic Weight: 168.93\nGroup: N/A\nPeriod: 6' },
+            'Yb': { name: 'Ytterbium', details: 'Atomic Number: 70\nSymbol: Yb\nAtomic Weight: 173.04\nGroup: N/A\nPeriod: 6' },
+            'Lu': { name: 'Lutetium', details: 'Atomic Number: 71\nSymbol: Lu\nAtomic Weight: 174.97\nGroup: 3\nPeriod: 6' },
+            'Hf': { name: 'Hafnium', details: 'Atomic Number: 72\nSymbol: Hf\nAtomic Weight: 178.49\nGroup: 4\nPeriod: 6' },
+            'Ta': { name: 'Tantalum', details: 'Atomic Number: 73\nSymbol: Ta\nAtomic Weight: 180.95\nGroup: 5\nPeriod: 6' },
+            'W': { name: 'Tungsten', details: 'Atomic Number: 74\nSymbol: W\nAtomic Weight: 183.84\nGroup: 6\nPeriod: 6' },
+            'Re': { name: 'Rhenium', details: 'Atomic Number: 75\nSymbol: Re\nAtomic Weight: 186.21\nGroup: 7\nPeriod: 6' },
+            'Os': { name: 'Osmium', details: 'Atomic Number: 76\nSymbol: Os\nAtomic Weight: 190.23\nGroup: 8\nPeriod: 6' },
+            'Ir': { name: 'Iridium', details: 'Atomic Number: 77\nSymbol: Ir\nAtomic Weight: 192.22\nGroup: 9\nPeriod: 6' },
+            'Pt': { name: 'Platinum', details: 'Atomic Number: 78\nSymbol: Pt\nAtomic Weight: 195.08\nGroup: 10\nPeriod: 6' },
+            'Au': { name: 'Gold', details: 'Atomic Number: 79\nSymbol: Au\nAtomic Weight: 196.97\nGroup: 11\nPeriod: 6' },
+            'Hg': { name: 'Mercury', details: 'Atomic Number: 80\nSymbol: Hg\nAtomic Weight: 200.59\nGroup: 12\nPeriod: 6' },
+            'Tl': { name: 'Thallium', details: 'Atomic Number: 81\nSymbol: Tl\nAtomic Weight: 204.38\nGroup: 13\nPeriod: 6' },
+            'Pb': { name: 'Lead', details: 'Atomic Number: 82\nSymbol: Pb\nAtomic Weight: 207.2\nGroup: 14\nPeriod: 6' },
+            'Bi': { name: 'Bismuth', details: 'Atomic Number: 83\nSymbol: Bi\nAtomic Weight: 208.98\nGroup: 15\nPeriod: 6' },
+            'Po': { name: 'Polonium', details: 'Atomic Number: 84\nSymbol: Po\nAtomic Weight: [209]\nGroup: 16\nPeriod: 6' },
+            'At': { name: 'Astatine', details: 'Atomic Number: 85\nSymbol: At\nAtomic Weight: [210]\nGroup: 17\nPeriod: 6' },
+            'Rn': { name: 'Radon', details: 'Atomic Number: 86\nSymbol: Rn\nAtomic Weight: [222]\nGroup: 18\nPeriod: 6' },
+            'Fr': { name: 'Francium', details: 'Atomic Number: 87\nSymbol: Fr\nAtomic Weight: [223]\nGroup: 1\nPeriod: 7' },
+            'Ra': { name: 'Radium', details: 'Atomic Number: 88\nSymbol: Ra\nAtomic Weight: [226]\nGroup: 2\nPeriod: 7' },
+            'Ac': { name: 'Actinium', details: 'Atomic Number: 89\nSymbol: Ac\nAtomic Weight: [227]\nGroup: 3\nPeriod: 7' },
+            'Th': { name: 'Thorium', details: 'Atomic Number: 90\nSymbol: Th\nAtomic Weight: 232.04\nGroup: N/A\nPeriod: 7' },
+            'Pa': { name: 'Protactinium', details: 'Atomic Number: 91\nSymbol: Pa\nAtomic Weight: 231.04\nGroup: N/A\nPeriod: 7' },
+            'U': { name: 'Uranium', details: 'Atomic Number: 92\nSymbol: U\nAtomic Weight: 238.03\nGroup: N/A\nPeriod: 7' },
+            'Np': { name: 'Neptunium', details: 'Atomic Number: 93\nSymbol: Np\nAtomic Weight: [237]\nGroup: N/A\nPeriod: 7' },
+            'Pu': { name: 'Plutonium', details: 'Atomic Number: 94\nSymbol: Pu\nAtomic Weight: [244]\nGroup: N/A\nPeriod: 7' },
+            'Am': { name: 'Americium', details: 'Atomic Number: 95\nSymbol: Am\nAtomic Weight: [243]\nGroup: N/A\nPeriod: 7' },
+            'Cm': { name: 'Curium', details: 'Atomic Number: 96\nSymbol: Cm\nAtomic Weight: [247]\nGroup: N/A\nPeriod: 7' },
+            'Bk': { name: 'Berkelium', details: 'Atomic Number: 97\nSymbol: Bk\nAtomic Weight: [247]\nGroup: N/A\nPeriod: 7' },
+            'Cf': { name: 'Californium', details: 'Atomic Number: 98\nSymbol: Cf\nAtomic Weight: [251]\nGroup: N/A\nPeriod: 7' },
+            'Es': { name: 'Einsteinium', details: 'Atomic Number: 99\nSymbol: Es\nAtomic Weight: [252]\nGroup: N/A\nPeriod: 7' },
+            'Fm': { name: 'Fermium', details: 'Atomic Number: 100\nSymbol: Fm\nAtomic Weight: [257]\nGroup: N/A\nPeriod: 7' },
+            'Md': { name: 'Mendelevium', details: 'Atomic Number: 101\nSymbol: Md\nAtomic Weight: [258]\nGroup: N/A\nPeriod: 7' },
+            'No': { name: 'Nobelium', details: 'Atomic Number: 102\nSymbol: No\nAtomic Weight: [259]\nGroup: N/A\nPeriod: 7' },
+            'Lr': { name: 'Lawrencium', details: 'Atomic Number: 103\nSymbol: Lr\nAtomic Weight: [262]\nGroup: 3\nPeriod: 7' },
+            'Rf': { name: 'Rutherfordium', details: 'Atomic Number: 104\nSymbol: Rf\nAtomic Weight: [267]\nGroup: 4\nPeriod: 7' },
+            'Db': { name: 'Dubnium', details: 'Atomic Number: 105\nSymbol: Db\nAtomic Weight: [270]\nGroup: 5\nPeriod: 7' },
+            'Sg': { name: 'Seaborgium', details: 'Atomic Number: 106\nSymbol: Sg\nAtomic Weight: [271]\nGroup: 6\nPeriod: 7' },
+            'Bh': { name: 'Bohrium', details: 'Atomic Number: 107\nSymbol: Bh\nAtomic Weight: [270]\nGroup: 7\nPeriod: 7' },
+            'Hs': { name: 'Hassium', details: 'Atomic Number: 108\nSymbol: Hs\nAtomic Weight: [277]\nGroup: 8\nPeriod: 7' },
+            'Mt': { name: 'Meitnerium', details: 'Atomic Number: 109\nSymbol: Mt\nAtomic Weight: [278]\nGroup: 9\nPeriod: 7' },
+            'Ds': { name: 'Darmstadtium', details: 'Atomic Number: 110\nSymbol: Ds\nAtomic Weight: [281]\nGroup: 10\nPeriod: 7' },
+            'Rg': { name: 'Roentgenium', details: 'Atomic Number: 111\nSymbol: Rg\nAtomic Weight: [282]\nGroup: 11\nPeriod: 7' },
+            'Cn': { name: 'Copernicium', details: 'Atomic Number: 112\nSymbol: Cn\nAtomic Weight: [285]\nGroup: 12\nPeriod: 7' },
+            'Nh': { name: 'Nihonium', details: 'Atomic Number: 113\nSymbol: Nh\nAtomic Weight: [286]\nGroup: 13\nPeriod: 7' },
+            'Fl': { name: 'Flerovium', details: 'Atomic Number: 114\nSymbol: Fl\nAtomic Weight: [289]\nGroup: 14\nPeriod: 7' },
+            'Mc': { name: 'Moscovium', details: 'Atomic Number: 115\nSymbol: Mc\nAtomic Weight: [290]\nGroup: 15\nPeriod: 7' },
+            'Lv': { name: 'Livermorium', details: 'Atomic Number: 116\nSymbol: Lv\nAtomic Weight: [293]\nGroup: 16\nPeriod: 7' },
+            'Ts': { name: 'Tennessine', details: 'Atomic Number: 117\nSymbol: Ts\nAtomic Weight: [294]\nGroup: 17\nPeriod: 7' },
+            'Og': { name: 'Oganesson', details: 'Atomic Number: 118\nSymbol: Og\nAtomic Weight: [294]\nGroup: 18\nPeriod: 7' }
+        };
+
+        function createPeriodicTable() {
+            const table = document.getElementById('periodicTable');
+            for (const [symbol, element] of Object.entries(elements)) {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'element';
+                elementDiv.innerText = symbol;
+                elementDiv.onclick = () => showDetails(symbol);
+                table.appendChild(elementDiv);
+            }
+        }
+
+        function showDetails(symbol) {
+            const element = elements[symbol];
+            document.getElementById('elementName').innerText = element.name;
+            document.getElementById('elementDetails').innerText = element.details;
+            document.getElementById('elementModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('elementModal').style.display = 'none';
+        }
+
+        // Close the modal if the user clicks anywhere outside of the modal content
+        window.onclick = function(event) {
+            const modal = document.getElementById('elementModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Create the periodic table on page load
+        window.onload = createPeriodicTable;
+    </script>
+</body>
+</html>

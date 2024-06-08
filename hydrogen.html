@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydrogen Text Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a2e;
+            color: #eaeaea;
+        }
+        #editor, #viewer {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #16213e;
+            color: #eaeaea;
+            overflow-y: scroll;
+        }
+        #viewer {
+            display: none;
+        }
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            background-color: #0f3460;
+            color: #eaeaea;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #533483;
+        }
+        .important {
+            background-color: #f8d7da;
+            border-left: 6px solid #f5c6cb;
+            padding: 10px;
+            margin-bottom: 10px;
+            color: red;
+        }
+        .tip {
+            background-color: #fff3cd;
+            border-left: 6px solid #ffeeba;
+            padding: 10px;
+            margin-bottom: 10px;
+            color: #856404;
+        }
+        #setupModal, #actionModal, #chooseFileModal, #howToUseModal, #messageModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        #setupModal-content, #actionModal-content, #chooseFileModal-content, #howToUseModal-content, #messageModal-content {
+            background-color: #0f3460;
+            color: #eaeaea;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        #setupModal-content p, #actionModal-content p, #chooseFileModal-content p, #howToUseModal-content p, #messageModal-content p {
+            margin-bottom: 10px;
+        }
+        #modal-buttons, #actionModal-buttons, #messageModal-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type="text"], input[type="password"] {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #16213e;
+            color: #eaeaea;
+        }
+        pre {
+            background-color: #16213e;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            margin-bottom: 10px;
+        }
+        #modeLabel {
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <button onclick="showActionDialog('save')">Save</button>
+    <button onclick="showActionDialog('load')">Load</button>
+    <button onclick="showActionDialog('import')">Import File</button>
+    <button onclick="toggleMode()">Toggle Mode</button>
+    <button onclick="toggleFormat()">Toggle Format (MD/TXT)</button>
+    <button onclick="showHowToUse()">How to Use</button>
+    <input type="file" id="fileInput" style="display:none" onchange="handleFileImport(event)">
+</div>
+
+<div>
+    <label for="fileName">File Name:</label>
+    <input type="text" id="fileName">
+</div>
+
+<div id="githubOptions">
+    <label for="repo">GitHub Repository (username/repo):</label>
+    <input type="text" id="repo">
+    <label for="token">GitHub Token:</label>
+    <input type="password" id="token">
+</div>
+
+<div>
+    <label id="modeLabel">Current Mode: Edit</label>
+</div>
+<div>
+    <label id="formatLabel">Current Format: Markdown</label>
+</div>
+
+<textarea id="editor"></textarea>
+<div id="viewer"></div>
+
+<div id="setupModal">
+    <div id="setupModal-content">
+        <h2>Welcome to Hydrogen Text Editor</h2>
+        <p>This editor uses GitHub for saving files by default. You can save your files to a GitHub repository.</p>
+        <p>To set up a GitHub repository and get a personal access token:</p>
+        <ol>
+            <li>Create a GitHub account if you don't have one already.</li>
+            <li>Create a new repository:
+                <ul>
+                    <li>Go to <a href="https://github.com/new" target="_blank">https://github.com/new</a>.</li>
+                    <li>Enter a repository name and description (optional).</li>
+                    <li>Choose either public or private.</li>
+                    <li>Click "Create repository".</li>
+                </ul>
+            </li>
+            <li>Generate a personal access token:
+                <ul>
+                    <li>Go to your GitHub settings.</li>
+                    <li>Navigate to "Developer settings" > "Personal access tokens".</li>
+                    <li>Click "Generate new token".</li>
+                    <li>Give your token a descriptive name.</li>
+                    <li>Select the appropriate scopes. For accessing private repositories, you need at least the <code>repo</code> scope.</li>
+                    <li>Click "Generate token".</li>
+                    <li>Copy the token. Make sure to store it securely as it will not be shown again.</li>
+                </ul>
+            </li>
+            <li>Enter your repository name and token in the fields provided and click "Close".</li>
+        </ol>
+        <div id="modal-buttons">
+            <button onclick="closeSetupModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="actionModal">
+    <div id="actionModal-content">
+        <p>Choose an action:</p>
+        <div id="actionModal-buttons">
+            <button onclick="performAction()">Proceed</button>
+            <button onclick="closeActionModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="chooseFileModal">
+    <div id="chooseFileModal-content">
+        <p>Choose a file to load:</p>
+        <div id="fileList"></div>
+        <button onclick="closeChooseFileModal()">Cancel</button>
+    </div>
+</div>
+
+<div id="howToUseModal">
+    <div id="howToUseModal-content">
+        <h2>How to Use Markdown Files</h2>
+        <p>Markdown is a lightweight markup language that you can use to add formatting elements to plaintext text documents. Here are some basics on how to use Markdown files:</p>
+        <ul>
+            <li><strong>Headers:</strong> Create headers by starting a line with one or more <code>#</code> symbols, followed by a space. The number of <code>#</code> symbols indicates the level of the header. For example:
+                <pre>
+# This is an H1
+## This is an H2
+### This is an H3
+                </pre>
+            </li>
+            <li><strong>Emphasis:</strong> Add emphasis to text using <code>*</code> or <code>_</code> for italics, and <code>**</code> or <code>__</code> for bold. For example:
+                <pre>
+*This text is italicized*
+_This text is also italicized_
+**This text is bold**
+__This text is also bold__
+                </pre>
+            </li>
+            <li><strong>Lists:</strong> Create unordered lists with <code>-</code>, <code>+</code>, or <code>*</code>. Create ordered lists by starting lines with numbers followed by periods. For example:
+                <pre>
+- Item 1
+- Item 2
+  - Subitem 1
+  - Subitem 2
+
+1. First item
+2. Second item
+3. Third item
+                </pre>
+            </li>
+            <li><strong>Links:</strong> Create links by placing the link text in square brackets, followed by the URL in parentheses. For example:
+                <pre>
+[Toolbox](xyzbeepo.github.io/toolbox)
+                </pre>
+            </li>
+            <li><strong>Images:</strong> Create images by placing the alt text in square brackets, followed by the URL in parentheses. Add an exclamation mark at the beginning. For example:
+                <pre>
+![Alt text](https://raw.githubusercontent.com/xyzbeepo/toolbox/main/Hydrogen.png)
+                </pre>
+            </li>
+            <li><strong>Blockquotes:</strong> Create blockquotes by starting lines with <code>></code>. For special blockquotes, use the formats <code>> [!IMPORTANT]</code> and <code>> [!TIP]</code>. For example:
+                <pre>
+> This is a blockquote
+
+> [!IMPORTANT] This is an important note
+
+> [!TIP] This is a tip
+                </pre>
+            </li>
+        </ul>
+        <button onclick="closeHowToUseModal()">Close</button>
+    </div>
+</div>
+
+<div id="messageModal">
+    <div id="messageModal-content">
+        <p id="messageContent"></p>
+        <div id="messageModal-buttons">
+            <button onclick="closeMessageModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let mode = 'edit'; // Modes: 'edit' or 'view'
+    let format = 'md'; // Formats: 'md' or 'txt'
+    let actionType = ''; // Action: 'save', 'load', 'import'
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('setupModal').style.display = 'flex';
+
+        const style = document.createElement('style');
+        style.innerHTML = 
+            '.spoiler {' +
+                'background-color: #444;' +
+                'color: #444;' +
+                'cursor: pointer;' +
+                'user-select: none;' +
+            '}' +
+            '.spoiler.revealed {' +
+                'color: #fff;' +
+            '}';
+        document.head.appendChild(style);
+    });
+
+    function toggleMode() {
+        const editor = document.getElementById('editor');
+        const viewer = document.getElementById('viewer');
+        const modeLabel = document.getElementById('modeLabel');
+
+        if (mode === 'edit') {
+            viewer.innerHTML = format === 'md' ? markdownToHtml(editor.value) : editor.value;
+            editor.style.display = 'none';
+            viewer.style.display = 'block';
+            mode = 'view';
+            modeLabel.textContent = 'Current Mode: View';
+        } else {
+            editor.style.display = 'block';
+            viewer.style.display = 'none';
+            mode = 'edit';
+            modeLabel.textContent = 'Current Mode: Edit';
+        }
+    }
+
+    function toggleFormat() {
+        const formatLabel = document.getElementById('formatLabel');
+        if (format === 'md') {
+            format = 'txt';
+            formatLabel.textContent = 'Current Format: Plain Text';
+        } else {
+            format = 'md';
+            formatLabel.textContent = 'Current Format: Markdown';
+        }
+        if (mode === 'view') {
+            toggleMode();
+            toggleMode();
+        }
+    }
+
+    function showActionDialog(action) {
+        actionType = action;
+        document.getElementById('actionModal').style.display = 'flex';
+    }
+
+    function performAction() {
+        document.getElementById('actionModal').style.display = 'none';
+        if (actionType === 'save') {
+            saveToGitHub();
+        } else if (actionType === 'load') {
+            loadFromGitHub();
+        } else if (actionType === 'import') {
+            importFromGitHub();
+        }
+    }
+
+    async function saveToGitHub() {
+        const content = document.getElementById('editor').value;
+        const fileName = document.getElementById('fileName').value;
+        const repo = document.getElementById('repo').value;
+        const token = document.getElementById('token').value;
+
+        if (!fileName || !repo || !token) {
+            showMessage('Please provide file name, repository, and token.');
+            return;
+        }
+
+        const apiUrl = `https://api.github.com/repos/${repo}/contents/${fileName}`;
+        const base64Content = btoa(unescape(encodeURIComponent(content)));
+
+        const response = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `Saving ${fileName}`,
+                content: base64Content
+            })
+        });
+
+        if (response.ok) {
+            showMessage('File saved to GitHub!');
+        } else {
+            showMessage('Error saving file to GitHub');
+        }
+    }
+
+    async function loadFromGitHub() {
+        const fileName = document.getElementById('fileName').value;
+        const repo = document.getElementById('repo').value;
+        const token = document.getElementById('token').value;
+
+        if (!fileName || !repo || !token) {
+            showMessage('Please provide file name, repository, and token.');
+            return;
+        }
+
+        const apiUrl = `https://api.github.com/repos/${repo}/contents/${fileName}`;
+
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3.raw'
+            }
+        });
+
+        if (response.ok) {
+            const content = await response.text();
+            document.getElementById('editor').value = content;
+            if (mode === 'view') {
+                document.getElementById('viewer').innerHTML = format === 'md' ? markdownToHtml(content) : content;
+            }
+        } else {
+            showMessage('Error loading file from GitHub');
+        }
+    }
+
+    function handleFileImport(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            document.getElementById('editor').value = e.target.result;
+        };
+
+        reader.readAsText(file);
+    }
+
+    function closeSetupModal() {
+        document.getElementById('setupModal').style.display = 'none';
+    }
+
+    function closeActionModal() {
+        document.getElementById('actionModal').style.display = 'none';
+    }
+
+    function closeHowToUseModal() {
+        document.getElementById('howToUseModal').style.display = 'none';
+    }
+
+    function showMessage(message) {
+        document.getElementById('messageContent').innerText = message;
+        document.getElementById('messageModal').style.display = 'flex';
+    }
+
+    function closeMessageModal() {
+        document.getElementById('messageModal').style.display = 'none';
+    }
+
+    function closeChooseFileModal() {
+        document.getElementById('chooseFileModal').style.display = 'none';
+    }
+
+    function markdownToHtml(markdown) {
+        return markdown
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+            .replace(/^\> \[\!IMPORTANT\](.*$)/gim, '<div class="important">$1</div>')
+            .replace(/^\> \[\!TIP\](.*$)/gim, '<div class="tip">$1</div>')
+            .replace(/^\|spoiler\|(.*$)/gim, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>')
+            .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+            .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
+            .replace(/\*(.*)\*/gim, '<i>$1</i>')
+            .replace(/\!\[(.*?)\]\((.*?)\)/gim, "<img alt='$1' src='$2' />")
+            .replace(/\[(.*?)\]\((.*?)\)/gim, "<a href='$2'>$1</a>")
+            .replace(/\n$/gim, '<br />')
+            .replace(/(?:\r\n|\r|\n)/g, '<br />')
+            .replace(/---/gim, '<hr>')
+            .replace(/\`{3}([^`]+)\`{3}/gim, '<pre><code>$1</code></pre>')
+            .replace(/\`([^`]+)\`/gim, '<code>$1</code>');
+    }
+</script>
+
+</body>
+</html>

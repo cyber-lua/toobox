@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Textcomp - Text Comparison Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            color: #4a90e2;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .text-area {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+        button {
+            background-color: #4a90e2;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #357ab8;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .progress-bar {
+            height: 20px;
+            background: #4a90e2;
+            width: 0;
+            transition: width 0.5s;
+        }
+        .percentage {
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Textcomp</h1>
+        <div>
+            <textarea id="text1" class="text-area" placeholder="Paste the first chunk of text here"></textarea>
+        </div>
+        <div>
+            <textarea id="text2" class="text-area" placeholder="Paste the second chunk of text here"></textarea>
+        </div>
+        <button onclick="compareTexts()">Compare</button>
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="percentage" class="percentage"></div>
+    </div>
+
+    <script>
+        function compareTexts() {
+            const text1 = document.getElementById('text1').value;
+            const text2 = document.getElementById('text2').value;
+            const progressBar = document.getElementById('progress-bar');
+            const percentageDiv = document.getElementById('percentage');
+
+            const similarity = calculateSimilarity(text1, text2);
+            const percentage = (similarity * 100).toFixed(2) + "%";
+            progressBar.style.width = percentage;
+            percentageDiv.innerHTML = percentage + " Identical";
+        }
+
+        function calculateSimilarity(text1, text2) {
+            const words1 = text1.split(/\s+/).filter(Boolean);
+            const words2 = text2.split(/\s+/).filter(Boolean);
+            const set1 = new Set(words1);
+            const set2 = new Set(words2);
+
+            const intersection = new Set([...set1].filter(word => set2.has(word)));
+            const totalWords = new Set([...set1, ...set2]);
+
+            return intersection.size / totalWords.size;
+        }
+    </script>
+</body>
+</html>

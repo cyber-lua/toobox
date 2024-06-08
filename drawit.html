@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DrawIt</title>
+   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+    <meta name="description" content="drawit is an open source free online drawing application hosted on github pages. Use it for anything, from game assets to (i actually dont know). Its completely free to use! Use drawit now ig">
+    <meta name="author" content="xyzbeepo">
+  <style>
+   
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      background-color: #333;
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    h1 {
+      color: #ffffff;
+    }
+
+    h3 {
+      color: #ffffff;
+    }
+    
+    p {
+      color: #ffffff;
+    }
+
+    a {
+      color: #b8f7ff;
+    }
+
+    #canvas {
+      border: 1px solid #000000;
+      background-color: #ffffff;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .control-group {
+      margin: 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .control-group label {
+      margin-right: 10px;
+    }
+
+    .control-group input[type="color"],
+    .control-group input[type="range"] {
+      margin-left: 5px;
+    }
+
+    .control-group button {
+      margin-left: 10px;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: none;
+      background-color: #494949;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .control-group button:hover {
+      background-color: #767676;
+    }
+
+    #canvas {
+      border-color: #000000;
+    }
+
+    #controls label,
+    #controls input[type="range"],
+    #controls input[type="color"],
+    #textInput {
+      font-size: 14px;
+      color: #ffffff;
+      background-color: #494949;
+      border: 1px solid #494949;
+      border-radius: 4px;
+      padding: 6px;
+      transition: border-color 0.3s ease;
+    }
+
+    #controls label {
+      margin-right: 10px;
+    }
+
+    #controls input[type="range"] {
+      width: 100px;
+    }
+
+    #controls input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: #333333;
+      cursor: pointer;
+    }
+
+    #controls input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: #333333;
+      cursor: pointer;
+    }
+
+    #controls input[type="color"] {
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    #controls input[type="checkbox"] {
+      margin-right: 5px;
+    }
+
+    #downloadButton {
+      margin-left: 10px;
+    }
+    .button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #494949;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+  }
+
+  .button:hover {
+    background-color: #767676;
+  }
+  /* Add this CSS at the end of your existing styles */
+
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.file-input + button {
+  margin-left: 10px;
+}
+
+.selected-file {
+  display: none;
+}
+  </style>
+</head>
+<body>
+  <div>
+    <h1>DrawIt</h1>
+    <a href="https://github.com/xyzbeepo/drawit">By: xyz_Beepo on github</a>
+    </div>
+  <div id="controls">
+    <div class="control-group">
+      <div class="file-input-wrapper">
+        <input type="file" id="imageInput" class="file-input">
+        <button class="btn btn-primary">Import</button>
+      </div>
+    </div>
+    <div class="control-group">
+        <label for="colorPicker">Color:</label>
+        <input type="color" id="colorPicker">
+      </div>
+  
+      <div class="control-group">
+        <label for="sizeSlider">Size:</label>
+        <input type="range" id="sizeSlider" min="1" max="20" value="5">
+      </div>
+  
+      <div class="control-group">
+        <label for="transparencySlider">Opacity:</label>
+        <input type="range" id="transparencySlider" min="0" max="1" step="0.01" value="1">
+      </div>
+  
+      <div class="control-group">
+        <label for="eraserCheckbox">Eraser:</label>
+        <input type="checkbox" id="eraserCheckbox">
+      </div>
+  
+      <div class="control-group">
+        <button id="downloadButton">Download</button>
+      </div>
+  </div>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let selectedColor = '#000000';
+    let selectedSize = 5;
+    let selectedTransparency = 1;
+    let isEraser = false;
+
+    function startDrawing(e) {
+      isDrawing = true;
+      [lastX, lastY] = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const { clientX, clientY } = e;
+      const x = clientX - canvas.offsetLeft;
+      const y = clientY - canvas.offsetTop;
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+
+      if (isEraser) {
+        ctx.globalCompositeOperation = 'destination-out'; // Use 'destination-out' to erase
+        ctx.lineWidth = selectedSize + 5; // Increase line width for better erasing
+      } else {
+        ctx.globalCompositeOperation = 'source-over'; // Use 'source-over' for drawing
+        ctx.strokeStyle = selectedColor;
+        ctx.lineWidth = selectedSize;
+      }
+
+      ctx.globalAlpha = selectedTransparency;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      [lastX, lastY] = [x, y];
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function updateColor() {
+      selectedColor = this.value;
+    }
+
+    function updateSize() {
+      selectedSize = this.value;
+    }
+
+    function updateTransparency() {
+      selectedTransparency = this.value;
+    }
+
+    function importImage(e) {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const img = new Image();
+    img.onload = function () {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = event.target.result;
+  };
+
+  if (file) {
+    reader.readAsDataURL(file);
+  }
+}
+
+const imageInput = document.getElementById('imageInput');
+imageInput.addEventListener('change', importImage);
+
+    function toggleEraser() {
+      isEraser = !isEraser;
+    }
+
+    function downloadImage() {
+      const dataURL = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = 'drawit.png';
+      a.click();
+    }
+
+    function addText() {
+      const text = document.getElementById('textInput').value;
+      ctx.font = '20px Helvetica Neue';
+      if (isEraser) {
+        ctx.fillStyle = '#ffffff'; // Use white color for eraser
+      } else {
+        ctx.fillStyle = selectedColor;
+      }
+      ctx.fillText(text, lastX, lastY);
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    const colorPicker = document.getElementById('colorPicker');
+    colorPicker.addEventListener('change', updateColor);
+
+    const sizeSlider = document.getElementById('sizeSlider');
+    sizeSlider.addEventListener('input', updateSize);
+
+    const transparencySlider = document.getElementById('transparencySlider');
+    transparencySlider.addEventListener('input', updateTransparency);
+
+    const eraserCheckbox = document.getElementById('eraserCheckbox');
+    eraserCheckbox.addEventListener('change', toggleEraser);
+
+    const downloadButton = document.getElementById('downloadButton');
+    downloadButton.addEventListener('click', downloadImage);
+  </script>
+</body>
+</html>

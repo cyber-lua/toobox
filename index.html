@@ -7,12 +7,23 @@
     <meta name="description" content="Free online tools for students and artists. This website is also known as beepos toolbox. Anyone can use these tools, copyright-free! i hope you have fun using these tools. :D">
     <meta name="author" content="xyzbeepo">
     <meta property="og:site_name" content="Toolbox">
-    <meta property="og:description" content="Free open-source, online, ad-free tools for students and artists.">
+    <meta property="og:description" content="Free online tools for students and artists">
     <meta name="theme-color" content="#26B1B6">
     <meta property="og:image" content="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/toolbox.png">
 
     <title>Toolbox</title>
     <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -25,6 +36,35 @@
             border: none;
             height: 5px;
             background-color: #353535;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #1e1e1e;
+            margin: 0 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .tab:hover {
+            background-color: #353535;
+        }
+        .tab.active {
+            background-color: #26B1B6;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
         }
         .container {
             display: grid;
@@ -39,6 +79,7 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             transition: transform 0.3s ease;
             overflow: hidden;
+            animation: fadeIn 0.5s ease;
         }
         .link-item:hover {
             transform: translateY(-5px);
@@ -79,44 +120,98 @@
 </head>
 <body>
     <h1>Toolbox</h1>
-    <p>Hi, Im Beepo. Im a coder that likes coding tools for everyone to use, free, open-source, online. I hope you find these useful. :D</p>
+    <p>Hi, I'm Beepo. I'm a coder that likes coding tools for everyone to use, free, open-source, online. I hope you find these useful. :D</p>
     <a href="https://github.com/xyzbeepo/toolbox">Made by: xyzbeepo on github</a>
     <hr>
-    <div class="container">
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/drawit.png" alt="Drawit">
-            <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/drawit.html'">Drawit</button>
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('tab1')">Graphical Design</div>
+        <div class="tab" onclick="showTab('tab2')">Utility</div>
+        <div class="tab" onclick="showTab('tab3')">Study</div>
+        <div class="tab" onclick="showTab('tab4')">Games</div>
+    </div>
+    <div id="tab1" class="tab-content active">
+        <div class="container">
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/drawit.png" alt="Drawit">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/drawit.html'">Drawit</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/imgr.png" alt="IMGR">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/imgr.html'">IMGR</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/snaledesigner.png" alt="Snale designer">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/snale-designer.html'">Snale Designer</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/Emptyicon.png" alt="Discord">
+                <button onclick="window.location.href='https://discord.gg/2EQtV67hWs'">Suggest a tile (Discord)</button>
+            </div>
         </div>
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/imgr.png" alt="Drawit">
-            <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/imgr.html'">IMGR</button>
+    </div>
+    <div id="tab2" class="tab-content">
+        <div class="container">
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/textii.png" alt="Textii">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/textii.html'">Textii</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/Textcomp.png" alt="Textcomp">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/textcomp.html'">Textcomp</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/Emptyicon.png" alt="Discord">
+                <button onclick="window.location.href='https://discord.gg/2EQtV67hWs'">Suggest a tile (Discord)</button>
+            </div>
         </div>
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/snaledesigner.png" alt="Drawit">
-            <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/snale-designer.html'">Snale Designer</button>
+    </div>
+    <div id="tab3" class="tab-content">
+        <div class="container">
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/Hydrogen.png" alt="Hydrogen">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/hydrogen.html'">Hydrogen</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/elemtr.png" alt="Elemtr">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/elemtr.html'">Elemtr</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/Emptyicon.png" alt="Discord">
+                <button onclick="window.location.href='https://discord.gg/2EQtV67hWs'">Suggest a tile (Discord)</button>
+            </div>
         </div>
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/textii.png" alt="Drawit">
-            <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/textii.html'">Textii</button>
-        </div>
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/Hydrogen.png" alt="Drawit">
-            <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/hydrogen.html'">Hydrogen</button>
-        </div>          
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/Textcomp.png" alt="Drawit">
-            <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/textcomp.html'">Textcomp</button>
-        </div>
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/elemtr.png" alt="Drawit">
-            <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/elemtr.html'">elemtr</button>
-        </div>
-        <div class="link-item">
-            <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/Emptyicon.png" alt="Drawit">
-            <button onclick="window.location.href='https://discord.gg/2EQtV67hWs'">Suggest a tile (Discord)</button>
+    </div>
+    <div id="tab4" class="tab-content">
+        <div class="container">
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/toolbox/main/DFTS.png" alt="Defend the square">
+                <button onclick="window.location.href='https://xyzbeepo.github.io/toolbox/defendthesquare.html'">Defend The Squares</button>
+            </div>
+            <div class="link-item">
+                <img src="https://raw.githubusercontent.com/xyzbeepo/beepo/main/Emptyicon.png" alt="Discord">
+                <button onclick="window.location.href='https://discord.gg/2EQtV67hWs'">Suggest a tile (Discord)</button>
+            </div>
         </div>
     </div>
     <hr>
     <a href="https://creativecommons.org/publicdomain/zero/1.0/">Any tools in the product are available under the CC0 1.0 Universal license</a>
+
+    <script>
+        function showTab(tabId) {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
 </body>
 </html>

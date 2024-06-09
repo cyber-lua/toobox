@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <title>Defend the Square</title>
     <style>
         body {
@@ -45,6 +44,41 @@
         }
         .circle.blue {
             background-color: #3498db; /* Blue */
+            width: 50px;
+            height: 50px;
+        }
+        .circle.magenta {
+            background-color: #e91e63; /* Magenta */
+        }
+        .circle.green {
+            background-color: #2ecc71; /* Green */
+            width: 70px;
+            height: 70px;
+        }
+        .shield {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .projectile {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .explosion {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(255, 165, 0, 0.7);
+            box-shadow: 0 0 20px rgba(255, 165, 0, 0.7);
+            animation: expand 0.5s forwards;
         }
         #game-over {
             display: none;
@@ -63,7 +97,7 @@
             font-size: 24px;
         }
         #game-over p {
-            margin: 0 0 20px;
+            margin: 0 0 10px;
         }
         #game-over button {
             padding: 10px 20px;
@@ -78,7 +112,96 @@
         #game-over button:hover {
             background-color: #2980b9;
         }
-        @keyframes explode {
+        #powerup-selection {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 10;
+        }
+        #powerup-selection button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 16px;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #powerup-selection button:hover {
+            background-color: #2980b9;
+        }
+        #wave-display {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffffff;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 11;
+        }
+        #how-to-play-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            z-index: 12;
+        }
+        #how-to-play-button:hover {
+            background-color: #2980b9;
+        }
+        #how-to-play-dialog {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 13;
+            width: 80%;
+            max-width: 400px;
+        }
+        #how-to-play-dialog h2 {
+            margin-top: 0;
+        }
+        #how-to-play-dialog button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #how-to-play-dialog button:hover {
+            background-color: #2980b9;
+        }
+        @keyframes expand {
             0% {
                 transform: scale(1);
                 opacity: 1;
@@ -87,9 +210,6 @@
                 transform: scale(2);
                 opacity: 0;
             }
-        }
-        .explode {
-            animation: explode 0.5s forwards;
         }
     </style>
 </head>
@@ -101,6 +221,24 @@
             <p id="stats"></p>
             <button onclick="restartGame()">Restart</button>
         </div>
+        <div id="powerup-selection">
+            <h2>Choose a Powerup</h2>
+            <button onclick="selectPowerup('kill-all')">Kill all current circles</button>
+            <button onclick="selectPowerup('spawn-shields')">Spawn shields</button>
+            <button onclick="selectPowerup('exploding-circles')">Circles explode when clicked</button>
+            <button onclick="selectPowerup('fire-projectiles')">Fire projectiles</button>
+        </div>
+        <div id="wave-display">Wave 1</div>
+        <button id="how-to-play-button" onclick="showHowToPlay()">How to Play</button>
+        <div id="how-to-play-dialog">
+            <h2>How to Play</h2>
+            <p>Defend the green square in the center from incoming circles. Click on the circles to destroy them.</p>
+            <p>Red circles are slow, yellow circles are fast, and blue circles will instantly end the game if they hit the square.</p>
+            <p>Magenta circles require three clicks to destroy. Green circles are boss circles that require ten clicks to destroy and spawn minions.</p>
+            <p>Every 10 circles you destroy, you can choose a powerup: kill all current circles, spawn shields, make circles explode when clicked, or fire projectiles.</p>
+            <p>Good luck!</p>
+            <button onclick="closeHowToPlay()">Close</button>
+        </div>
     </div>
 
     <script>
@@ -108,67 +246,172 @@
         const square = document.getElementById('square');
         const gameOverScreen = document.getElementById('game-over');
         const stats = document.getElementById('stats');
+        const powerupSelection = document.getElementById('powerup-selection');
+        const waveDisplay = document.getElementById('wave-display');
+        const howToPlayButton = document.getElementById('how-to-play-button');
+        const howToPlayDialog = document.getElementById('how-to-play-dialog');
         let circlesClicked = 0;
         let circlesMissed = 0;
         let startTime;
         let gameInterval;
         let spawnInterval;
+        let projectileInterval;
         let circles = [];
+        let powerup = null;
+        let shields = [];
+        let shieldCount = 0;
+        let projectileCount = 0;
+        let explodingCircles = false;
+        let explosionRadius = 60;
+        let wave = 1;
+        let bossWaveActive = false;
 
         function startGame() {
             circlesClicked = 0;
             circlesMissed = 0;
+            wave = 1;
             startTime = Date.now();
+            bossWaveActive = false;
             square.style.backgroundColor = '#4caf50'; // Green
             gameOverScreen.style.display = 'none';
+            powerupSelection.style.display = 'none';
+            waveDisplay.style.display = 'none';
             circles = [];
+            shields.forEach(shield => shield.remove()); // Remove shields
+            shields = [];
+            shieldCount = 0;
+            projectileCount = 0;
+            explodingCircles = false;
+            explosionRadius = 60;
             spawnCircles();
             gameInterval = setInterval(updateGame, 1000 / 60); // 60 FPS
+            if (projectileInterval) clearInterval(projectileInterval);
         }
 
         function spawnCircles() {
             spawnInterval = setInterval(() => {
+                if (bossWaveActive) return;
+
                 for (let i = 0; i < 1 + Math.floor(circlesClicked / 10); i++) {
-                    const circle = document.createElement('div');
-                    circle.classList.add('circle');
-
-                    const type = Math.random();
-                    if (type < 0.6) {
-                        circle.classList.add('red');
-                    } else if (type < 0.9) {
-                        circle.classList.add('yellow');
+                    if (circlesClicked > 0 && circlesClicked % 30 === 0) {
+                        // Spawn a green boss circle every 30 circles clicked
+                        spawnBossCircle();
                     } else {
-                        circle.classList.add('blue');
+                        spawnRegularCircle();
                     }
-
-                    const edge = Math.floor(Math.random() * 4);
-                    switch (edge) {
-                        case 0: // Top
-                            circle.style.top = '0px';
-                            circle.style.left = Math.random() * (window.innerWidth - 30) + 'px';
-                            break;
-                        case 1: // Right
-                            circle.style.top = Math.random() * (window.innerHeight - 30) + 'px';
-                            circle.style.left = window.innerWidth - 30 + 'px';
-                            break;
-                        case 2: // Bottom
-                            circle.style.top = window.innerHeight - 30 + 'px';
-                            circle.style.left = Math.random() * (window.innerWidth - 30) + 'px';
-                            break;
-                        case 3: // Left
-                            circle.style.top = Math.random() * (window.innerHeight - 30) + 'px';
-                            circle.style.left = '0px';
-                            break;
-                    }
-
-                    circle.onclick = () => {
-                        circle.remove();
-                        circlesClicked++;
-                    };
-                    document.body.appendChild(circle);
-                    circles.push(circle);
                 }
             }, 1000);
+        }
+
+        function spawnRegularCircle() {
+            const circle = document.createElement('div');
+            circle.classList.add('circle');
+
+            const type = Math.random();
+            if (type < 0.45) {
+                circle.classList.add('red');
+            } else if (type < 0.75) {
+                circle.classList.add('yellow');
+            } else if (type < 0.9) {
+                circle.classList.add('blue');
+            } else {
+                circle.classList.add('magenta');
+                circle.dataset.hits = 0; // Track hits for magenta circles
+            }
+
+            const edge = Math.floor(Math.random() * 4);
+            switch (edge) {
+                case 0: // Top
+                    circle.style.top = '0px';
+                    circle.style.left = Math.random() * (window.innerWidth - 30) + 'px';
+                    break;
+                case 1: // Right
+                    circle.style.top = Math.random() * (window.innerHeight - 30) + 'px';
+                    circle.style.left = window.innerWidth - 30 + 'px';
+                    break;
+                case 2: // Bottom
+                    circle.style.top = window.innerHeight - 30 + 'px';
+                    circle.style.left = Math.random() * (window.innerWidth - 30) + 'px';
+                    break;
+                case 3: // Left
+                    circle.style.top = Math.random() * (window.innerHeight - 30) + 'px';
+                    circle.style.left = '0px';
+                    break;
+            }
+
+            circle.onclick = () => {
+                if (circle.classList.contains('magenta')) {
+                    let hits = parseInt(circle.dataset.hits) + 1;
+                    if (hits >= 3) {
+                        triggerExplosion(circle);
+                    } else {
+                        circle.dataset.hits = hits;
+                    }
+                } else {
+                    triggerExplosion(circle);
+                }
+                circlesClicked++;
+                if (circlesClicked % 10 === 0 && !bossWaveActive) {
+                    showPowerupSelection();
+                }
+            };
+            document.body.appendChild(circle);
+            circles.push(circle);
+        }
+
+        function spawnBossCircle() {
+            bossWaveActive = true;
+
+            const circle = document.createElement('div');
+            circle.classList.add('circle', 'green');
+            circle.dataset.hits = 0; // Track hits for the boss circle
+            circle.style.top = Math.random() * (window.innerHeight - 70) + 'px';
+            circle.style.left = Math.random() * (window.innerWidth - 70) + 'px';
+
+            circle.onclick = () => {
+                let hits = parseInt(circle.dataset.hits) + 1;
+                if (hits >= 10) {
+                    triggerExplosion(circle);
+                    bossWaveActive = false;
+                } else {
+                    circle.dataset.hits = hits;
+                }
+                circlesClicked++;
+                if (circlesClicked % 10 === 0 && !bossWaveActive) {
+                    showPowerupSelection();
+                }
+            };
+            document.body.appendChild(circle);
+            circles.push(circle);
+        }
+
+        function triggerExplosion(circle) {
+            if (explodingCircles) {
+                const explosion = document.createElement('div');
+                explosion.classList.add('explosion');
+                explosion.style.left = circle.style.left;
+                explosion.style.top = circle.style.top;
+                explosion.style.backgroundColor = circle.style.backgroundColor;
+                document.body.appendChild(explosion);
+
+                setTimeout(() => {
+                    explosion.remove();
+                }, 500);
+
+                circle.remove();
+                setTimeout(() => {
+                    const rect = explosion.getBoundingClientRect();
+                    circles.forEach(c => {
+                        const cRect = c.getBoundingClientRect();
+                        const distance = Math.sqrt(Math.pow(cRect.left - rect.left, 2) + Math.pow(cRect.top - rect.top, 2));
+                        if (distance < explosionRadius) {
+                            triggerExplosion(c); // Trigger explosion for nearby circles
+                        }
+                    });
+                }, 10);
+            } else {
+                circle.remove();
+            }
         }
 
         function updateGame() {
@@ -178,7 +421,7 @@
                 const dx = squareRect.left + squareRect.width / 2 - (rect.left + rect.width / 2);
                 const dy = squareRect.top + squareRect.height / 2 - (rect.top + rect.height / 2);
                 const angle = Math.atan2(dy, dx);
-                
+
                 let speed;
                 if (circle.classList.contains('red')) {
                     speed = 0.5;
@@ -186,6 +429,10 @@
                     speed = 2;
                 } else if (circle.classList.contains('blue')) {
                     speed = 0.2;
+                } else if (circle.classList.contains('magenta')) {
+                    speed = 1;
+                } else if (circle.classList.contains('green')) {
+                    speed = 0.3;
                 }
 
                 circle.style.left = rect.left + speed * Math.cos(angle) + 'px';
@@ -196,7 +443,7 @@
                     if (circle.classList.contains('blue')) {
                         endGame(true);
                     } else {
-                        circle.remove();
+                        triggerExplosion(circle);
                         circlesMissed++;
                         updateSquareColor();
                         if (circlesMissed >= 3) {
@@ -204,7 +451,29 @@
                         }
                     }
                 }
+
+                // Check for collision with shields
+                shields.forEach(shield => {
+                    const shieldRect = shield.getBoundingClientRect();
+                    if (rect.left < shieldRect.right && rect.right > shieldRect.left &&
+                        rect.top < shieldRect.bottom && rect.bottom > shieldRect.top) {
+                        triggerExplosion(circle);
+                    }
+                });
+
+                // Check for collision with projectiles
+                document.querySelectorAll('.projectile').forEach(projectile => {
+                    const projRect = projectile.getBoundingClientRect();
+                    if (rect.left < projRect.right && rect.right > projRect.left &&
+                        rect.top < projRect.bottom && rect.bottom > projRect.top) {
+                        triggerExplosion(circle);
+                        projectile.remove();
+                    }
+                });
             });
+
+            updateShields();
+            updateProjectiles();
             circles = circles.filter(circle => document.body.contains(circle));
         }
 
@@ -219,9 +488,10 @@
         function endGame(instant) {
             clearInterval(gameInterval);
             clearInterval(spawnInterval);
+            clearInterval(projectileInterval);
             const survivalTime = Math.floor((Date.now() - startTime) / 1000);
             if (instant) {
-                stats.innerHTML = `You survived for ${survivalTime} seconds and clicked ${circlesClicked} circles.`;
+                stats.innerHTML = `You got hit by a blue circle! You survived for ${survivalTime} seconds and clicked ${circlesClicked} circles.`;
             } else {
                 stats.innerHTML = `You survived for ${survivalTime} seconds and clicked ${circlesClicked} circles.`;
             }
@@ -229,6 +499,7 @@
 
             // Trigger the explosion effect
             square.classList.add('explode');
+            triggerExplosion(square); // Make the square explode
             circles.forEach(circle => circle.classList.add('explode'));
             setTimeout(() => {
                 square.style.display = 'none';
@@ -238,9 +509,116 @@
 
         function restartGame() {
             document.querySelectorAll('.circle').forEach(circle => circle.remove());
+            document.querySelectorAll('.projectile').forEach(projectile => projectile.remove());
             square.classList.remove('explode');
             square.style.display = 'block';
             startGame();
+        }
+
+        function showPowerupSelection() {
+            powerupSelection.style.display = 'block';
+            clearInterval(gameInterval);
+            clearInterval(spawnInterval);
+            if (projectileInterval) clearInterval(projectileInterval);
+        }
+
+        function selectPowerup(selectedPowerup) {
+            if (selectedPowerup === 'kill-all') {
+                circles.forEach(circle => circle.remove());
+            } else if (selectedPowerup === 'spawn-shields') {
+                if (shieldCount < 9) {
+                    shieldCount = Math.min(9, shieldCount + 3);
+                    for (let i = 0; i < shieldCount; i++) {
+                        const shield = document.createElement('div');
+                        shield.classList.add('shield');
+                        shields.push(shield);
+                        document.body.appendChild(shield);
+                    }
+                } else {
+                    selectPowerup('fire-projectiles'); // Automatically select projectiles if shields are capped
+                }
+            } else if (selectedPowerup === 'exploding-circles') {
+                explodingCircles = true;
+                explosionRadius += 20; // Increase the explosion radius with each upgrade
+            } else if (selectedPowerup === 'fire-projectiles') {
+                if (projectileInterval) clearInterval(projectileInterval);
+                projectileCount++;
+                projectileInterval = setInterval(fireProjectiles, 10000 / projectileCount); // Increase firing rate with each upgrade
+            }
+
+            powerupSelection.style.display = 'none';
+            showWaveNumber(wave);
+            wave++;
+            setTimeout(() => {
+                waveDisplay.style.display = 'none';
+                gameInterval = setInterval(updateGame, 1000 / 60); // 60 FPS
+                spawnCircles();
+            }, 1000);
+        }
+
+        function showWaveNumber(wave) {
+            waveDisplay.innerText = `Wave ${wave}`;
+            waveDisplay.style.display = 'block';
+        }
+
+        function updateShields() {
+            if (shieldCount > 0) {
+                const squareRect = square.getBoundingClientRect();
+                const radius = 200; // Increased radius for shields
+                const angleStep = (2 * Math.PI) / shieldCount;
+                const centerX = squareRect.left + squareRect.width / 2;
+                const centerY = squareRect.top + squareRect.height / 2;
+                shields.forEach((shield, index) => {
+                    const angle = angleStep * index + (Date.now() % 6000) / 6000 * 2 * Math.PI;
+                    shield.style.left = centerX + radius * Math.cos(angle) - 10 + 'px';
+                    shield.style.top = centerY + radius * Math.sin(angle) - 10 + 'px';
+                });
+            }
+        }
+
+        function fireProjectiles() {
+            const squareRect = square.getBoundingClientRect();
+            for (let i = 0; i < projectileCount; i++) {
+                const projectile = document.createElement('div');
+                projectile.classList.add('projectile');
+                projectile.style.left = squareRect.left + squareRect.width / 2 + 'px';
+                projectile.style.top = squareRect.top + squareRect.height / 2 + 'px';
+
+                const angle = Math.random() * 2 * Math.PI;
+                const speed = 4;
+
+                function moveProjectile() {
+                    const rect = projectile.getBoundingClientRect();
+                    projectile.style.left = rect.left + speed * Math.cos(angle) + 'px';
+                    projectile.style.top = rect.top + speed * Math.sin(angle) + 'px';
+
+                    if (rect.left < 0 || rect.right > window.innerWidth || rect.top < 0 || rect.bottom > window.innerHeight) {
+                        projectile.remove();
+                    } else {
+                        requestAnimationFrame(moveProjectile);
+                    }
+                }
+
+                document.body.appendChild(projectile);
+                moveProjectile();
+            }
+        }
+
+        function updateProjectiles() {
+            document.querySelectorAll('.projectile').forEach(projectile => {
+                const rect = projectile.getBoundingClientRect();
+                if (rect.left < 0 || rect.right > window.innerWidth || rect.top < 0 || rect.bottom > window.innerHeight) {
+                    projectile.remove();
+                }
+            });
+        }
+
+        function showHowToPlay() {
+            howToPlayDialog.style.display = 'block';
+        }
+
+        function closeHowToPlay() {
+            howToPlayDialog.style.display = 'none';
         }
 
         startGame();

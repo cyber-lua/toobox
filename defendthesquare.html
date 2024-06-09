@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defend the Square</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1e1e1e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+        }
+        #game {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        #square {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: #4caf50; /* Green */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.3s;
+        }
+        .circle {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        .circle.red {
+            background-color: #e74c3c; /* Red */
+        }
+        .circle.yellow {
+            background-color: #f1c40f; /* Yellow */
+        }
+        .circle.blue {
+            background-color: #3498db; /* Blue */
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        #game-over h1 {
+            margin: 0 0 10px;
+            font-size: 24px;
+        }
+        #game-over p {
+            margin: 0 0 20px;
+        }
+        #game-over button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #game-over button:hover {
+            background-color: #2980b9;
+        }
+        @keyframes explode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+        .explode {
+            animation: explode 0.5s forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div id="square"></div>
+        <div id="game-over">
+            <h1>Game Over</h1>
+            <p id="stats"></p>
+            <button onclick="restartGame()">Restart</button>
+        </div>
+    </div>
+
+    <script>
+        const game = document.getElementById('game');
+        const square = document.getElementById('square');
+        const gameOverScreen = document.getElementById('game-over');
+        const stats = document.getElementById('stats');
+        let circlesClicked = 0;
+        let circlesMissed = 0;
+        let startTime;
+        let gameInterval;
+        let spawnInterval;
+        let circles = [];
+
+        function startGame() {
+            circlesClicked = 0;
+            circlesMissed = 0;
+            startTime = Date.now();
+            square.style.backgroundColor = '#4caf50'; // Green
+            gameOverScreen.style.display = 'none';
+            circles = [];
+            spawnCircles();
+            gameInterval = setInterval(updateGame, 1000 / 60); // 60 FPS
+        }
+
+        function spawnCircles() {
+            spawnInterval = setInterval(() => {
+                for (let i = 0; i < 1 + Math.floor(circlesClicked / 10); i++) {
+                    const circle = document.createElement('div');
+                    circle.classList.add('circle');
+
+                    const type = Math.random();
+                    if (type < 0.6) {
+                        circle.classList.add('red');
+                    } else if (type < 0.9) {
+                        circle.classList.add('yellow');
+                    } else {
+                        circle.classList.add('blue');
+                    }
+
+                    const edge = Math.floor(Math.random() * 4);
+                    switch (edge) {
+                        case 0: // Top
+                            circle.style.top = '0px';
+                            circle.style.left = Math.random() * (window.innerWidth - 30) + 'px';
+                            break;
+                        case 1: // Right
+                            circle.style.top = Math.random() * (window.innerHeight - 30) + 'px';
+                            circle.style.left = window.innerWidth - 30 + 'px';
+                            break;
+                        case 2: // Bottom
+                            circle.style.top = window.innerHeight - 30 + 'px';
+                            circle.style.left = Math.random() * (window.innerWidth - 30) + 'px';
+                            break;
+                        case 3: // Left
+                            circle.style.top = Math.random() * (window.innerHeight - 30) + 'px';
+                            circle.style.left = '0px';
+                            break;
+                    }
+
+                    circle.onclick = () => {
+                        circle.remove();
+                        circlesClicked++;
+                    };
+                    document.body.appendChild(circle);
+                    circles.push(circle);
+                }
+            }, 1000);
+        }
+
+        function updateGame() {
+            const squareRect = square.getBoundingClientRect();
+            circles.forEach(circle => {
+                const rect = circle.getBoundingClientRect();
+                const dx = squareRect.left + squareRect.width / 2 - (rect.left + rect.width / 2);
+                const dy = squareRect.top + squareRect.height / 2 - (rect.top + rect.height / 2);
+                const angle = Math.atan2(dy, dx);
+                
+                let speed;
+                if (circle.classList.contains('red')) {
+                    speed = 0.5;
+                } else if (circle.classList.contains('yellow')) {
+                    speed = 2;
+                } else if (circle.classList.contains('blue')) {
+                    speed = 0.2;
+                }
+
+                circle.style.left = rect.left + speed * Math.cos(angle) + 'px';
+                circle.style.top = rect.top + speed * Math.sin(angle) + 'px';
+
+                if (rect.left < squareRect.right && rect.right > squareRect.left &&
+                    rect.top < squareRect.bottom && rect.bottom > squareRect.top) {
+                    if (circle.classList.contains('blue')) {
+                        endGame(true);
+                    } else {
+                        circle.remove();
+                        circlesMissed++;
+                        updateSquareColor();
+                        if (circlesMissed >= 3) {
+                            endGame(false);
+                        }
+                    }
+                }
+            });
+            circles = circles.filter(circle => document.body.contains(circle));
+        }
+
+        function updateSquareColor() {
+            if (circlesMissed === 1) {
+                square.style.backgroundColor = '#f1c40f'; // Yellow
+            } else if (circlesMissed === 2) {
+                square.style.backgroundColor = '#e74c3c'; // Red
+            }
+        }
+
+        function endGame(instant) {
+            clearInterval(gameInterval);
+            clearInterval(spawnInterval);
+            const survivalTime = Math.floor((Date.now() - startTime) / 1000);
+            if (instant) {
+                stats.innerHTML = `You survived for ${survivalTime} seconds and clicked ${circlesClicked} circles.`;
+            } else {
+                stats.innerHTML = `You survived for ${survivalTime} seconds and clicked ${circlesClicked} circles.`;
+            }
+            gameOverScreen.style.display = 'block';
+
+            // Trigger the explosion effect
+            square.classList.add('explode');
+            circles.forEach(circle => circle.classList.add('explode'));
+            setTimeout(() => {
+                square.style.display = 'none';
+                circles.forEach(circle => circle.style.display = 'none');
+            }, 500);
+        }
+
+        function restartGame() {
+            document.querySelectorAll('.circle').forEach(circle => circle.remove());
+            square.classList.remove('explode');
+            square.style.display = 'block';
+            startGame();
+        }
+
+        startGame();
+    </script>
+</body>
+</html>

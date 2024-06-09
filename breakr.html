@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Break Reminder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f06, #4a90e2);
+            color: #fff;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        #controlPanel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .timerInput {
+            display: flex;
+            gap: 10px;
+        }
+        .timerInput label, .timerInput input {
+            font-size: 1rem;
+        }
+        .timerInput input {
+            width: 60px;
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #4a90e2;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #357ABD;
+        }
+        button:disabled {
+            background-color: #7FB3E1;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Break Reminder</h1>
+    <div id="controlPanel">
+        <div class="timerInput">
+            <label for="workHours">Work:</label>
+            <input type="number" id="workHours" placeholder="Hours" min="0" value="0">
+            <input type="number" id="workMinutes" placeholder="Minutes" min="0" value="30">
+            <input type="number" id="workSeconds" placeholder="Seconds" min="0" value="0">
+        </div>
+        <div class="timerInput">
+            <label for="breakHours">Break:</label>
+            <input type="number" id="breakHours" placeholder="Hours" min="0" value="0">
+            <input type="number" id="breakMinutes" placeholder="Minutes" min="0" value="5">
+            <input type="number" id="breakSeconds" placeholder="Seconds" min="0" value="0">
+        </div>
+        <button id="startButton">Start</button>
+        <button id="stopButton" disabled>Stop</button>
+    </div>
+    <div id="status"></div>
+
+    <script>
+        let timer;
+        let breakTimer;
+        let popupWindow;
+
+        document.getElementById('startButton').addEventListener('click', startTimer);
+        document.getElementById('stopButton').addEventListener('click', stopTimer);
+
+        function getMilliseconds(hours, minutes, seconds) {
+            return ((hours * 60 * 60) + (minutes * 60) + seconds) * 1000;
+        }
+
+        function startTimer() {
+            const workHours = parseInt(document.getElementById('workHours').value) || 0;
+            const workMinutes = parseInt(document.getElementById('workMinutes').value) || 0;
+            const workSeconds = parseInt(document.getElementById('workSeconds').value) || 0;
+
+            const workDuration = getMilliseconds(workHours, workMinutes, workSeconds);
+
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('stopButton').disabled = false;
+            document.getElementById('status').textContent = "Timer started. You'll be reminded to take a break.";
+
+            timer = setTimeout(showPopup, workDuration);
+        }
+
+        function stopTimer() {
+            clearTimeout(timer);
+            clearTimeout(breakTimer);
+            if (popupWindow) {
+                popupWindow.close();
+            }
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('status').textContent = "Timer stopped.";
+        }
+
+        function showPopup() {
+            const breakHours = parseInt(document.getElementById('breakHours').value) || 0;
+            const breakMinutes = parseInt(document.getElementById('breakMinutes').value) || 0;
+            const breakSeconds = parseInt(document.getElementById('breakSeconds').value) || 0;
+
+            const breakDuration = getMilliseconds(breakHours, breakMinutes, breakSeconds);
+
+            popupWindow = window.open('', 'BreakReminder', 'width=300,height=200');
+            if (!popupWindow || popupWindow.closed || typeof popupWindow.closed === 'undefined') {
+                alert("Popup blocker is enabled! Please add this site to your exception list.");
+                return;
+            }
+            popupWindow.document.write('<html><head><title>Break Time</title><style>body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #4a90e2; color: #fff; } h1 { font-size: 2rem; }</style></head><body><h1>Take a Break!</h1><p>You have 5 minutes to rest.</p></body></html>');
+            popupWindow.document.close();
+            popupWindow.focus();
+            playBeep();
+            breakTimer = setTimeout(closePopup, breakDuration); // break duration
+        }
+
+        function closePopup() {
+            if (popupWindow) {
+                popupWindow.close();
+            }
+            startTimer(); // Restart the work timer after the break
+        }
+
+        function playBeep() {
+            const beep = new Audio('https://github.com/xyzbeepo/toolbox/raw/main/ring.mp3');
+            beep.play();
+        }
+    </script>
+</body>
+</html>
